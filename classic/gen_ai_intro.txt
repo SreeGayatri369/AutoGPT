@@ -1,0 +1,2 @@
+Introduction to Generative AI (Gen AI):
+Generative AI refers to artificial intelligence technologies that can generate new content, including text, images, and videos. These models learn patterns from existing data and use this knowledge to create novel outputs.

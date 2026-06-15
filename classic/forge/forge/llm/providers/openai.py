@@ -794,13 +794,20 @@ class OpenAIProvider(
             Mapping[str, Any]: Any keyword arguments to pass on to the completion parser
         """
         tools_compat_mode = False
+
         if functions:
-            if not OPEN_AI_CHAT_MODELS[model].has_function_call_api:
-                # Provide compatibility with older models
+            # ✅ Safe lookup for NVIDIA / unknown models
+            model_info = OPEN_AI_CHAT_MODELS.get(model)
+
+            has_function_call_api = getattr(model_info, "has_function_call_api", False)
+
+            if not has_function_call_api:
+                # ✅ Compatibility mode for non-OpenAI models (like NVIDIA)
                 _functions_compat_fix_kwargs(functions, prompt_messages)
                 tools_compat_mode = True
                 functions = None
 
+        # ✅ Call base implementation
         openai_messages, kwargs, parse_kwargs = super()._get_chat_completion_args(
             prompt_messages=prompt_messages,
             model=model,
@@ -809,8 +816,11 @@ class OpenAIProvider(
             reasoning_effort=reasoning_effort,
             **kwargs,
         )
+
+        # ✅ Add credentials
         kwargs.update(self._credentials.get_model_access_kwargs(model))  # type: ignore
 
+        # ✅ Mark compat mode for parser
         if tools_compat_mode:
             parse_kwargs["compat_mode"] = True
 

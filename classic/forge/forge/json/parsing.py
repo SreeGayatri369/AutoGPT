@@ -24,27 +24,17 @@ def json_loads(json_str: str) -> Any:
     Returns:
         The parsed JSON object, same as built-in json.loads.
     """
-    # Remove possible code block
-    pattern = r"```(?:json|JSON)*([\s\S]*?)```"
-    match = re.search(pattern, json_str)
+    
+    import json
+    import re
 
-    if match:
-        json_str = match.group(1).strip()
+    # ✅ FIX: strip "tool_calls" prefix
+    json_str = json_str.strip()
 
-    json_result = demjson3.decode(json_str, return_errors=True)
-    assert json_result is not None  # by virtue of return_errors=True
+    if json_str.startswith("tool_calls"):
+        json_str = re.sub(r"^tool_calls\s*", "", json_str)
 
-    if json_result.errors:
-        logger.debug(
-            "JSON parse errors:\n" + "\n".join(str(e) for e in json_result.errors)
-        )
-
-    if json_result.object in (demjson3.syntax_error, demjson3.undefined):
-        raise ValueError(
-            f"Failed to parse JSON string: {json_str}", *json_result.errors
-        )
-
-    return json_result.object
+    return json.loads(json_str)
 
 
 def extract_dict_from_json(json_str: str) -> dict[str, Any]:
